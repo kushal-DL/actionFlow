@@ -1,0 +1,162 @@
+{
+  "activeSprintName": "Q3-Sprint-1",
+  "sprints": [
+    {
+      "name": "Q3-Sprint-1",
+      "startDate": "2024-07-01",
+      "endDate": "2024-07-14"
+    },
+    {
+      "name": "Q3-Sprint-2",
+      "startDate": "2024-07-15",
+      "endDate": "2024-07-28"
+    }
+  ],
+  "dailyTasks": [
+    {
+      "id": "daily-1",
+      "text": "Review team's pull requests on GitHub",
+      "completed": false,
+      "owner": "Kushal S.",
+      "date": "2024-07-10"
+    },
+    {
+      "id": "daily-2",
+      "text": "Sync with the design team about new mockups",
+      "completed": true,
+      "owner": "Kushal S.",
+      "date": "2024-07-10"
+    },
+    {
+      "id": "daily-1751313084252-0.25022206942314873",
+      "text": "Check emails and messages",
+      "completed": false,
+      "owner": "Kushal S.",
+      "date": "2025-07-01"
+    },
+    {
+      "id": "daily-1751313084252-0.22238782254911738",
+      "text": "Attend daily stand-up meeting",
+      "completed": false,
+      "owner": "Kushal S.",
+      "date": "2025-07-01"
+    }
+  ],
+  "weeklyTasks": [
+    {
+      "id": "weekly-1",
+      "text": "Prepare agenda for the weekly leadership sync",
+      "completed": false,
+      "owner": "Kushal S.",
+      "date": "2024-07-08"
+    },
+    {
+      "id": "weekly-2",
+      "text": "Compile the weekly engineering report",
+      "completed": false,
+      "owner": "Ana G.",
+      "date": "2024-07-08"
+    },
+    {
+      "id": "weekly-1751313084252-0.6968722094442145",
+      "text": "Plan tasks for the upcoming week",
+      "completed": false,
+      "owner": "Kushal S.",
+      "date": "2025-06-29"
+    },
+    {
+      "id": "weekly-1751313084252-0.6009928078032112",
+      "text": "Update weekly progress report",
+      "completed": false,
+      "owner": "Kushal S.",
+      "date": "2025-06-29"
+    },
+    {
+      "id": "sprint-1",
+      "text": "BUG-123: Fix authentication issue on mobile",
+      "completed": false,
+      "owner": "Kushal S.",
+      "date": "2025-06-29"
+    }
+  ],
+  "sprintTasks": [
+    {
+      "id": "sprint-2",
+      "text": "FEAT-456: Implement new dashboard chart component",
+      "completed": false,
+      "owner": "Ana G.",
+      "sprint": "Q3-Sprint-1"
+    },
+    {
+      "id": "sprint-3",
+      "text": "TECH-789: Upgrade Next.js to the latest version",
+      "completed": false,
+      "owner": "Kushal S.",
+      "sprint": "Q3-Sprint-1"
+    }
+  ],
+  "miscTasks": [
+    {
+      "id": "misc-1",
+      "text": "Research new productivity tools for the team",
+      "completed": false,
+      "owner": "Kushal S.",
+      "date": "2024-07-10"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "c1",
+      "name": "Kushal S.",
+      "email": "kushal@example.com"
+    },
+    {
+      "id": "c2",
+      "name": "Ana G.",
+      "email": "ana@example.com"
+    }
+  ],
+  "myContactId": "c1",
+  "defaultDailyTasks": [
+    {
+      "id": "dd1",
+      "text": "Check emails and messages",
+      "completed": false,
+      "owner": "Kushal S."
+    },
+    {
+      "id": "dd2",
+      "text": "Attend daily stand-up meeting",
+      "completed": false,
+      "owner": "Kushal S."
+    }
+  ],
+  "defaultWeeklyTasks": [
+    {
+      "id": "dw1",
+      "text": "Plan tasks for the upcoming week",
+      "completed": false,
+      "owner": "Kushal S."
+    },
+    {
+      "id": "dw2",
+      "text": "Update weekly progress report",
+      "completed": false,
+      "owner": "Kushal S."
+    }
+  ],
+  "defaultSprintTasks": [
+    {
+      "id": "ds1",
+      "text": "Participate in sprint planning",
+      "completed": false,
+      "owner": "Kushal S."
+    },
+    {
+      "id": "ds2",
+      "text": "Join the sprint retrospective and review",
+      "completed": false,
+      "owner": "Kushal S."
+    }
+  ]
+}
