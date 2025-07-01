@@ -14,10 +14,6 @@ ActionFlow is a smart task management application built with Next.js, React, and
     -   Live transcribe audio from your microphone and save it to a file.
 -   **Contact Management:** Keep a list of contacts to assign tasks to.
 -   **Export:** Export your task lists to a CSV file.
-![image](https://github.com/user-attachments/assets/f1c12502-3b46-4ad6-8fb5-9654f42e54cf)
-![image](https://github.com/user-attachments/assets/0b2f924f-cd69-40c4-898f-8344d78654c2)
-![image](https://github.com/user-attachments/assets/96d399c4-db05-4148-b1f2-b12f17b8c2e3)
-![image](https://github.com/user-attachments/assets/c3a2b87d-c0e1-47e0-8b8e-634c04d74980)
 
 ## How to Run
 
@@ -27,11 +23,11 @@ Follow these steps to get the application running on your local machine.
 
 -   [Node.js](https://nodejs.org/) (version 20 or later recommended)
 -   `npm` (usually comes with Node.js)
--   [Ollama](https://ollama.com/) installed and running.
+-   [Ollama](https://ollama.com/) installed and running (only if using a local model).
 
-### 1. Download and Run an Ollama Model
+### 1. Download and Run an Ollama Model (Optional)
 
-This application is configured to use a local LLM running via Ollama.
+If you plan to use a local LLM, you'll need to run it via Ollama.
 
 1.  If you haven't already, [download and install Ollama](https://ollama.com/).
 2.  Pull the model you want to use. For example, to use `llama3`:
@@ -42,24 +38,50 @@ This application is configured to use a local LLM running via Ollama.
 
 ### 2. Set Up Environment Variables
 
-The application **requires** a `.env` file in the project root to manage its connection to Ollama and other settings.
+The application requires a `.env` file in the project root to connect to an AI model. You can configure it to use a local Ollama model or a cloud-based model like Google Gemini.
 
 1.  Create a file named `.env` in the root of the project.
-2.  Add the following variables. You **must** provide the name of the Ollama model you have downloaded. The server URL is optional and defaults to the standard local address.
-    ```
-    # REQUIRED: The name of the model you have downloaded via `ollama run <model_name>`
-    LLM_MODEL_NAME="llama3.2:3b"
-    
-    # OPTIONAL: The URL of your Ollama server
-    LLM_API_URL="http://127.0.0.1:11434"
+2.  Add the configuration variables based on your chosen model provider.
 
-    # OPTIONAL: The API key of any other model like gemini
-    # LLM_API_KEY=""
+#### Option A: Using a Local Ollama Model (Default)
 
-    # REQUIRED: The directory to save live transcriptions (relative to the project root)
-    TRANSCRIPTION_SAVE_PATH="src/data/transcriptions"
-    ```
-    *Note: The application will create the transcription directory if it doesn't exist.*
+This is the simplest way to get started if you have Ollama running locally.
+
+```
+# The name of the model you have downloaded (e.g., "llama3")
+LLM_MODEL_NAME="llama3"
+
+# The URL of your local Ollama server
+LLM_API_URL="http://127.0.0.1:11434"
+
+# Leave this blank for Ollama
+LLM_API_KEY=
+
+# The path to save live transcriptions
+TRANSCRIPTION_SAVE_PATH="src/data/transcriptions"
+```
+
+#### Option B: Using Google Gemini
+
+To use a powerful cloud model like Gemini, you'll need an API key from Google AI Studio.
+
+1.  Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  Use the following configuration in your `.env` file:
+
+```
+# The name of the Gemini model you want to use
+LLM_MODEL_NAME="gemini-1.5-flash-latest"
+
+# The API endpoint for the Gemini API
+LLM_API_URL="https://generativelanguage.googleapis.com/v1beta/models"
+
+# Paste your API key here
+LLM_API_KEY="YOUR_GEMINI_API_KEY"
+
+# The path to save live transcriptions
+TRANSCRIPTION_SAVE_PATH="src/data/transcriptions"
+```
+*Note: The application will create the transcription directory if it doesn't exist.*
 
 ### 3. Install Dependencies
 
