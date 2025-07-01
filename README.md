@@ -14,6 +14,8 @@ ActionFlow is a smart task management application built with Next.js, React, and
     -   Live transcribe audio from your microphone and save it to a file.
 -   **Contact Management:** Keep a list of contacts to assign tasks to.
 -   **Export:** Export your task lists to a CSV file.
+![image](https://github.com/user-attachments/assets/f1c12502-3b46-4ad6-8fb5-9654f42e54cf)
+![image](https://github.com/user-attachments/assets/0b2f924f-cd69-40c4-898f-8344d78654c2)
 
 ## How to Run
 
