@@ -53,6 +53,9 @@ The application **requires** a `.env` file in the project root to manage its con
     # OPTIONAL: The URL of your Ollama server
     LLM_API_URL="http://127.0.0.1:11434"
 
+    # OPTIONAL: The API key of any other model like gemini
+    # LLM_API_KEY=""
+
     # REQUIRED: The directory to save live transcriptions (relative to the project root)
     TRANSCRIPTION_SAVE_PATH="src/data/transcriptions"
     ```
