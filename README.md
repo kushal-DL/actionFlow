@@ -15,7 +15,7 @@ ActionFlow is a smart task management application built with Next.js, React, and
 -   **Contact Management:** Keep a list of contacts to assign tasks to.
 -   **Export:** Export your task lists to a CSV file.
 
-![image](https://github.com/user-attachments/assets/51907d34-3598-422e-bfdc-132878f42c0d)
+![image](https://github.com/user-attachments/assets/9e8881ef-fa6d-4b8a-9735-40b9bf970ce6)
 
 ![image](https://github.com/user-attachments/assets/d686f2cc-a24b-44ab-bb93-2c3abd15250c)
 
