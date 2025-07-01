@@ -70,7 +70,7 @@ To use a powerful cloud model like Gemini, you'll need an API key from Google AI
 
 ```
 # The name of the Gemini model you want to use
-LLM_MODEL_NAME="gemini-1.5-flash-latest"
+LLM_MODEL_NAME="gemini-2.0-flash-001"
 
 # The API endpoint for the Gemini API
 LLM_API_URL="https://generativelanguage.googleapis.com/v1beta/models"
