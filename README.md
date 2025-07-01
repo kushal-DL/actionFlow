@@ -44,7 +44,7 @@ The application **requires** a `.env` file in the project root to manage its con
 2.  Add the following variables. You **must** provide the name of the Ollama model you have downloaded. The server URL is optional and defaults to the standard local address.
     ```
     # REQUIRED: The name of the model you have downloaded via `ollama run <model_name>`
-    LLM_MODEL_NAME="llama3"
+    LLM_MODEL_NAME="llama3.2:3b"
     
     # OPTIONAL: The URL of your Ollama server
     LLM_API_URL="http://127.0.0.1:11434"
