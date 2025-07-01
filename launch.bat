@@ -12,6 +12,6 @@ REM Give the server a moment to initialize before opening the browser
 timeout /t 10 /nobreak > nul
 
 echo Opening ActionFlow in your default browser...
-start http://localhost:9002
+start http://actionflow.com:9002
 
 exit
