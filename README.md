@@ -15,6 +15,10 @@ ActionFlow is a smart task management application built with Next.js, React, and
 -   **Contact Management:** Keep a list of contacts to assign tasks to.
 -   **Export:** Export your task lists to a CSV file.
 
+![image](https://github.com/user-attachments/assets/51907d34-3598-422e-bfdc-132878f42c0d)
+
+![image](https://github.com/user-attachments/assets/d686f2cc-a24b-44ab-bb93-2c3abd15250c)
+
 ## How to Run
 
 Follow these steps to get the application running on your local machine.
@@ -106,5 +110,7 @@ This command starts the Next.js application in development mode with Turbopack f
 The application will now be running. Open your web browser and go to:
 
 [http://localhost:9002](http://localhost:9002)
+
+NOTE: Alternatively, you can run install.bat as administrator to set the application URL as http://actionflow.com:9002 and launch the app by running launch.bat file.
 
 You should see the ActionFlow application interface. You can now start managing your tasks and interacting with Jarvis!
