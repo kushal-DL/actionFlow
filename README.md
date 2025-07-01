@@ -107,4 +107,6 @@ The application will now be running. Open your web browser and go to:
 
 [http://localhost:9002](http://localhost:9002)
 
+NOTE: You can alternatively choose to run install.bat to install all dependencies and set the URL for application as http://actionflow.com:9002 and launch the application using launch.bat file.
+
 You should see the ActionFlow application interface. You can now start managing your tasks and interacting with Jarvis!
