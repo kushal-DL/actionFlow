@@ -70,7 +70,7 @@ To use a powerful cloud model like Gemini, you'll need an API key from Google AI
 
 ```
 # The name of the Gemini model you want to use
-LLM_MODEL_NAME="gemini-2.0-flash-001"
+LLM_MODEL_NAME="gemini-1.5-flash-latest"
 
 # The API endpoint for the Gemini API
 LLM_API_URL="https://generativelanguage.googleapis.com/v1beta/models"
@@ -106,7 +106,5 @@ This command starts the Next.js application in development mode with Turbopack f
 The application will now be running. Open your web browser and go to:
 
 [http://localhost:9002](http://localhost:9002)
-
-NOTE: You can alternatively choose to run install.bat to install all dependencies and set the URL for application as http://actionflow.com:9002 and launch the application using launch.bat file.
 
 You should see the ActionFlow application interface. You can now start managing your tasks and interacting with Jarvis!
