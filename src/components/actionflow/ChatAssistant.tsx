@@ -8,11 +8,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare, Send, Loader2, Bot, FileText, Mic, Square, Plus, Trash2 } from 'lucide-react';
+import { MessageSquare, Send, Loader2, Bot, FileText, Mic, Square, Plus, Trash2, Check, X, Undo, Redo } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { taskAssistantRouter } from '@/ai/flows/task-assistant-flow';
 import { summarizeText } from '@/ai/flows/summarize-text-flow';
 import { createTasksFromText, CreatedTask, CreateTasksOutput } from '@/ai/flows/create-tasks-flow';
+import { completeTasksFromText, CompleteTasksOutput, IdentifiedTask } from '@/ai/flows/complete-tasks-flow';
+import { deleteTasksFromText, DeleteTasksOutput } from '@/ai/flows/delete-tasks-flow';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useActionFlowStore } from '@/hooks/useActionFlowStore';
@@ -21,10 +23,14 @@ import { Card, CardContent } from '../ui/card';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { Badge } from '../ui/badge';
+import { Separator } from '../ui/separator';
 
 type Message =
   | { type: 'text'; role: 'user' | 'assistant'; content: string }
-  | { type: 'task_preview'; role: 'assistant'; data: CreateTasksOutput; id: string };
+  | { type: 'task_preview'; role: 'assistant'; data: CreateTasksOutput; id: string }
+  | { type: 'complete_preview'; role: 'assistant'; data: CompleteTasksOutput; id: string }
+  | { type: 'delete_preview'; role: 'assistant'; data: DeleteTasksOutput; id: string };
 
 interface ChatAssistantProps {
     isOpen: boolean;
@@ -32,11 +38,18 @@ interface ChatAssistantProps {
     isTourActive?: boolean;
 }
 
+const categoryDisplayMap: Record<string, string> = {
+  daily: 'Today',
+  weekly: 'This Week',
+  sprint: 'Sprint',
+  misc: 'Misc',
+};
+
 export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = false }: ChatAssistantProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { type: 'text', role: 'assistant', content: "Hello! I'm Jarvis, your AI assistant. How can I help you be more productive today?" },
+    { type: 'text', role: 'assistant', content: "Hello! I'm Jarvis. How can I help you be more productive today? You can ask me to create tasks, complete them, or answer questions about your workload." },
   ]);
 
   const [showSummarizeDialog, setShowSummarizeDialog] = useState(false);
@@ -61,7 +74,17 @@ export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = fal
   
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { state: actionFlowState, addTask } = useActionFlowStore(s => ({ state: s, addTask: s.addTask }));
+  const { state: actionFlowState, addTask, completeTasks, deleteTasks, undo, redo } = useActionFlowStore(s => ({ 
+      state: s, 
+      addTask: s.addTask, 
+      completeTasks: s.completeTasks,
+      deleteTasks: s.deleteTasks,
+      undo: s.undo,
+      redo: s.redo
+  }));
+
+  const canUndo = actionFlowState.past.length > 0;
+  const canRedo = actionFlowState.future.length > 0;
 
   const scrollToBottom = useCallback(() => {
     if (scrollAreaRef.current) {
@@ -136,6 +159,64 @@ export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = fal
         if (source === 'chat') setIsLoading(false);
     }
   };
+
+  const handleCompleteTasks = async (query: string) => {
+    setIsLoading(true);
+    try {
+        const allOpenTasks = {
+            daily: actionFlowState.dailyTasks.filter(t => !t.completed),
+            weekly: actionFlowState.weeklyTasks.filter(t => !t.completed),
+            sprint: actionFlowState.sprintTasks.filter(t => !t.completed),
+            misc: actionFlowState.miscTasks.filter(t => !t.completed),
+        };
+        const response = await completeTasksFromText({
+            query,
+            allTasks: JSON.stringify(allOpenTasks),
+        });
+
+        if (response.clarification) {
+          setMessages(prev => [...prev, { type: 'text', role: 'assistant', content: response.clarification! }]);
+        } else if (response.tasksToComplete && response.tasksToComplete.length > 0) {
+          setMessages(prev => [...prev, { type: 'complete_preview', role: 'assistant', data: response, id: `complete-${Date.now()}` }]);
+        } else {
+          setMessages(prev => [...prev, { type: 'text', role: 'assistant', content: "I couldn't find any open tasks matching your request." }]);
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        setMessages(prev => [...prev, { type: 'text', role: 'assistant', content: `Sorry, I ran into an issue: ${message}` }]);
+    } finally {
+        setIsLoading(false);
+    }
+  }
+
+  const handleDeleteTasks = async (query: string) => {
+    setIsLoading(true);
+    try {
+        const allTasks = {
+            daily: actionFlowState.dailyTasks,
+            weekly: actionFlowState.weeklyTasks,
+            sprint: actionFlowState.sprintTasks,
+            misc: actionFlowState.miscTasks,
+        };
+        const response = await deleteTasksFromText({
+            query,
+            allTasks: JSON.stringify(allTasks),
+        });
+
+        if (response.clarification) {
+            setMessages(prev => [...prev, { type: 'text', role: 'assistant', content: response.clarification! }]);
+        } else if (response.tasksToDelete && response.tasksToDelete.length > 0) {
+            setMessages(prev => [...prev, { type: 'delete_preview', role: 'assistant', data: response, id: `delete-${Date.now()}` }]);
+        } else {
+            setMessages(prev => [...prev, { type: 'text', role: 'assistant', content: "I couldn't find any tasks matching your request to delete." }]);
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        setMessages(prev => [...prev, { type: 'text', role: 'assistant', content: `Sorry, I ran into an issue: ${message}` }]);
+    } finally {
+        setIsLoading(false);
+    }
+  }
   
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,6 +248,10 @@ export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = fal
 
       if (response.intent === 'create_tasks') {
         await handleCreateTasks(query, 'chat');
+      } else if (response.intent === 'mark_tasks_done') {
+        await handleCompleteTasks(query);
+      } else if (response.intent === 'delete_tasks') {
+        await handleDeleteTasks(query);
       } else if (response.answer) {
         setMessages(prev => [...prev, { type: 'text', role: 'assistant', content: response.answer! }]);
       } else {
@@ -348,7 +433,7 @@ export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = fal
     setShowTaskCreationDialog(false);
   };
 
-  const handleUpdatePendingTask = (updates: Partial<CreatedTask>, index: number, context: 'chat' | 'popup', previewId?: string) => {
+  const handleUpdatePendingTask = (updates: Partial<CreatedTask>, index: number, context: 'popup' | 'chat', previewId?: string) => {
     if (context === 'popup') {
         if (!taskCreationData) return;
         setTaskCreationData(prevData => {
@@ -383,6 +468,59 @@ export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = fal
   
   const handleCancelTasksFromChat = (previewId: string) => {
      setMessages(prev => prev.filter(m => !(m.type === 'task_preview' && m.id === previewId)));
+  };
+
+  const handleConfirmCompletion = (previewId: string, tasks: IdentifiedTask[]) => {
+    if (tasks.length > 0) {
+      completeTasks(tasks.map(t => ({ id: t.id, category: t.category as TaskCategory })));
+    }
+    setMessages(prev => prev.map(m => 
+      m.type === 'complete_preview' && m.id === previewId 
+      ? { type: 'text', role: 'assistant', content: `Okay, I've marked ${tasks.length} task(s) as complete.`}
+      : m
+    ));
+  };
+
+  const handleCancelCompletion = (previewId: string) => {
+    setMessages(prev => prev.filter(m => !(m.type === 'complete_preview' && m.id === previewId)));
+  };
+
+  const handleRemoveFromCompletionPreview = (previewId: string, taskId: string) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.type === 'complete_preview' && msg.id === previewId) {
+        const newTasks = msg.data.tasksToComplete.filter(t => t.id !== taskId);
+        return {
+          ...msg,
+          data: { ...msg.data, tasksToComplete: newTasks }
+        };
+      }
+      return msg;
+    }));
+  };
+
+  const handleConfirmDeletion = (previewId: string, tasks: IdentifiedTask[]) => {
+    if (tasks.length > 0) {
+      deleteTasks(tasks.map(t => ({ id: t.id, category: t.category as TaskCategory })));
+    }
+    setMessages(prev => prev.map(m => 
+      m.type === 'delete_preview' && m.id === previewId 
+      ? { type: 'text', role: 'assistant', content: `Okay, I've deleted ${tasks.length} task(s).`}
+      : m
+    ));
+  };
+
+  const handleCancelDeletion = (previewId: string) => {
+    setMessages(prev => prev.filter(m => !(m.type === 'delete_preview' && m.id === previewId)));
+  };
+
+  const handleRemoveFromDeletionPreview = (previewId: string, taskId: string) => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.type === 'delete_preview' && msg.id === previewId) {
+        const newTasks = msg.data.tasksToDelete.filter(t => t.id !== taskId);
+        return { ...msg, data: { ...msg.data, tasksToDelete: newTasks } };
+      }
+      return msg;
+    }));
   };
 
   const renderTaskEditor = (
@@ -440,8 +578,8 @@ export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = fal
           >
             <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="daily">Today</SelectItem>
+              <SelectItem value="weekly">This Week</SelectItem>
               <SelectItem value="sprint">Sprint</SelectItem>
               <SelectItem value="misc">Misc</SelectItem>
             </SelectContent>
@@ -475,6 +613,81 @@ export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = fal
     </div>
   );
 
+  const CompletePreviewCard = ({ message }: { message: Extract<Message, {type: 'complete_preview'}> }) => {
+    const tasks = message.data.tasksToComplete;
+    if (tasks.length === 0) {
+      return (
+        <div className="bg-muted rounded-lg p-3 text-sm w-full">
+          <p className="text-muted-foreground">No more tasks in this list to complete.</p>
+          <div className="flex gap-2 mt-4 justify-end">
+            <Button variant="ghost" size="sm" onClick={() => handleCancelCompletion(message.id)}>Close</Button>
+          </div>
+        </div>
+      );
+    }
+  
+    return (
+      <div className="bg-muted rounded-lg p-3 text-sm w-full">
+        <p className="mb-2 text-muted-foreground">I found these tasks. I'll mark them as complete.</p>
+        <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+           {tasks.map((task) => (
+             <div key={task.id} className="flex items-center gap-2 p-2 rounded-md bg-background border">
+                <div className="flex-grow">
+                  <p className="font-semibold text-sm">{task.text}</p>
+                  <Badge variant="secondary" className="font-normal">{categoryDisplayMap[task.category] || task.category}</Badge>
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveFromCompletionPreview(message.id, task.id)}>
+                  <X className="h-4 w-4" />
+                </Button>
+             </div>
+           ))}
+        </div>
+        <div className="flex gap-2 mt-4 justify-end">
+            <Button variant="ghost" size="sm" onClick={() => handleCancelCompletion(message.id)}>Cancel</Button>
+            <Button size="sm" onClick={() => handleConfirmCompletion(message.id, tasks)}><Check className="mr-2 h-4 w-4"/>Confirm</Button>
+        </div>
+      </div>
+    );
+  };
+
+  const DeletePreviewCard = ({ message }: { message: Extract<Message, {type: 'delete_preview'}> }) => {
+    const tasks = message.data.tasksToDelete;
+    if (tasks.length === 0) {
+      return (
+        <div className="bg-muted rounded-lg p-3 text-sm w-full">
+          <p className="text-muted-foreground">No more tasks in this list to delete.</p>
+          <div className="flex gap-2 mt-4 justify-end">
+            <Button variant="ghost" size="sm" onClick={() => handleCancelDeletion(message.id)}>Close</Button>
+          </div>
+        </div>
+      );
+    }
+  
+    return (
+      <div className="bg-muted rounded-lg p-3 text-sm w-full">
+        <p className="mb-2 text-muted-foreground">I will permanently delete the following tasks.</p>
+        <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+           {tasks.map((task) => (
+             <div key={task.id} className="flex items-center gap-2 p-2 rounded-md bg-background border">
+                <div className="flex-grow">
+                  <p className="font-semibold text-sm">{task.text}</p>
+                  <Badge variant="secondary" className="font-normal">{categoryDisplayMap[task.category] || task.category}</Badge>
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveFromDeletionPreview(message.id, task.id)}>
+                  <X className="h-4 w-4" />
+                </Button>
+             </div>
+           ))}
+        </div>
+        <div className="flex gap-2 mt-4 justify-end">
+            <Button variant="ghost" size="sm" onClick={() => handleCancelDeletion(message.id)}>Cancel</Button>
+            <Button variant="destructive" size="sm" onClick={() => handleConfirmDeletion(message.id, tasks)}><Trash2 className="mr-2 h-4 w-4"/>Delete Tasks</Button>
+        </div>
+      </div>
+    );
+  };
+
+
   return (
     <>
       <Sheet open={isOpen} onOpenChange={(open) => {
@@ -503,8 +716,12 @@ export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = fal
                              <div className={cn("max-w-[80%] rounded-lg p-3 text-sm", message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
                                 <pre className="whitespace-pre-wrap font-sans">{message.content}</pre>
                             </div>
-                        ) : (
+                        ) : message.type === 'task_preview' ? (
                             <TaskPreviewCard message={message} />
+                        ) : message.type === 'complete_preview' ? (
+                            <CompletePreviewCard message={message} />
+                        ) : (
+                           <DeletePreviewCard message={message} />
                         )}
                     </div>
                 ))}
@@ -524,6 +741,11 @@ export default function ChatAssistant({ isOpen, onOpenChange, isTourActive = fal
               <Button variant="outline" size="sm" onClick={() => setShowTaskCreationDialog(true)} disabled={isLoading}><Plus className="mr-2 h-4 w-4" />Add Tasks</Button>
               <Button variant="outline" size="sm" onClick={() => setShowSummarizeDialog(true)} disabled={isLoading}><FileText className="mr-2 h-4 w-4" />Summarize</Button>
               <Button variant="outline" size="sm" onClick={() => liveRecognitionRef.current ? setShowListenDialog(true) : toast({ variant: 'destructive', title: 'Unsupported Browser' })} disabled={isLoading}><Mic className="mr-2 h-4 w-4" />Listen</Button>
+            </div>
+             <Separator className="my-3" />
+            <div className="flex gap-2 mb-3 justify-center">
+                <Button variant="outline" size="sm" onClick={undo} disabled={!canUndo || isLoading}><Undo className="mr-2 h-4 w-4" />Undo</Button>
+                <Button variant="outline" size="sm" onClick={redo} disabled={!canRedo || isLoading}><Redo className="mr-2 h-4 w-4" />Redo</Button>
             </div>
             <form id="jarvis-form" onSubmit={handleSend} className="flex items-center gap-2">
               <div className="relative flex-grow">

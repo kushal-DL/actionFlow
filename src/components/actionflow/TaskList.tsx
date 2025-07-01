@@ -160,7 +160,7 @@ export default function TaskList({
     return () => resizeObserver.disconnect();
   }, [visibleTasks, cardHeight, checkScrollability, showIncluded]);
 
-  const hasIncludedTasks = includedTasksConfig && includedTasksConfig.some(config => config.tasks.length > 0);
+  const hasIncludedTasks = includedTasksConfig && includedTasksConfig.length > 0;
 
   return (
     <Card
@@ -256,7 +256,6 @@ export default function TaskList({
                       onDelete={() => deleteTask(category, task.id)}
                       onUpdate={(updates) => updateTask(category, task.id, updates)}
                       showCheckbox={showCheckbox}
-                      view={view}
                     />
                   ))
                 )}
@@ -284,7 +283,6 @@ export default function TaskList({
                                       onDelete={() => deleteTask(config.category, task.id)}
                                       onUpdate={(updates) => updateTask(config.category, task.id, updates)}
                                       showCheckbox={showCheckbox}
-                                      view={view}
                                     />
                                   ))}
                                 </div>

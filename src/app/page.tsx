@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
-import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from "date-fns";
+import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO, isToday } from "date-fns";
 import type { Task, TaskCategory } from "@/types";
 import ChatAssistant from "@/components/actionflow/ChatAssistant";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -94,18 +94,19 @@ export default function Home() {
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const selectedDateStr = dailyDate ? format(dailyDate, "yyyy-MM-dd") : "";
+  const startOfCurrentWeekStr = format(startOfWeek(new Date(), { weekStartsOn: 0 }), "yyyy-MM-dd");
   const startOfSelectedWeek = weeklyDate ? startOfWeek(weeklyDate, { weekStartsOn: 0 }) : new Date();
   const endOfSelectedWeek = weeklyDate ? endOfWeek(weeklyDate, { weekStartsOn: 0 }) : new Date();
+  const startOfSelectedWeekStr = format(startOfSelectedWeek, 'yyyy-MM-dd');
 
   const dailyTasksForToday = state.dailyTasks.filter(t => t.date === todayStr);
-  const weeklyTasksForThisWeek = state.weeklyTasks.filter(t => t.date === format(startOfWeek(new Date(), { weekStartsOn: 0 }), "yyyy-MM-dd"));
+  const weeklyTasksForThisWeek = state.weeklyTasks.filter(t => t.date === startOfCurrentWeekStr);
   
   const dailyTasksForPicker = state.dailyTasks.filter(t => t.date === selectedDateStr);
   const weeklyTasksForPicker = state.weeklyTasks.filter(t => {
       if (!t.date) return false;
       const taskWeekStart = format(startOfWeek(parseISO(t.date), { weekStartsOn: 0 }), 'yyyy-MM-dd');
-      const selectedWeekStart = format(startOfSelectedWeek, 'yyyy-MM-dd');
-      return taskWeekStart === selectedWeekStart;
+      return taskWeekStart === startOfSelectedWeekStr;
   });
   
   const activeSprintTasks = state.sprintTasks.filter(t => t.sprint === state.activeSprintName);
@@ -310,8 +311,8 @@ export default function Home() {
             <Tabs value={view} onValueChange={(v) => { setView(v as any); setFocusedTask(null); }} className="w-full">
               <TabsList id="main-tabs-list" className="grid w-full grid-cols-5 mb-6">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="daily">Daily</TabsTrigger>
-                <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                <TabsTrigger value="daily">Today</TabsTrigger>
+                <TabsTrigger value="weekly">This Week</TabsTrigger>
                 <TabsTrigger value="sprint">Sprint</TabsTrigger>
                 <TabsTrigger value="misc">Misc</TabsTrigger>
               </TabsList>
@@ -320,7 +321,7 @@ export default function Home() {
                 <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
                   <div id="overview-checklists" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                     {renderTaskList("daily", "Today's Checklist", dailyTasksForToday, <Sun className="w-6 h-6 text-primary" />, { date: todayStr })}
-                    {renderTaskList("weekly", "This Week's Checklist", weeklyTasksForThisWeek, <Calendar className="w-6 h-6 text-primary" />, { date: format(startOfWeek(new Date(), { weekStartsOn: 0 }), "yyyy-MM-dd")})}
+                    {renderTaskList("weekly", "This Week's Checklist", weeklyTasksForThisWeek, <Calendar className="w-6 h-6 text-primary" />, { date: startOfCurrentWeekStr })}
                     {renderTaskList("sprint", "Active Sprint Checklist", activeSprintTasks, <Zap className="w-6 h-6 text-primary" />, { sprint: state.activeSprintName })}
                     {renderTaskList("misc", "Miscellaneous Tasks", state.miscTasks, <ListChecks className="w-6 h-6 text-primary" />, { date: todayStr })}
                   </div>
@@ -342,7 +343,7 @@ export default function Home() {
                   </Popover>
                 </div>
                 <div className="max-w-3xl mx-auto">
-                  {renderTaskList("daily", `Tasks for ${selectedDateStr}`, dailyTasksForPicker, <Sun className="w-6 h-6 text-primary" />, { date: selectedDateStr })}
+                  {renderTaskList("daily", dailyDate && isToday(dailyDate) ? "Today's Tasks" : `Tasks for ${format(dailyDate || new Date(), "PPP")}`, dailyTasksForPicker, <Sun className="w-6 h-6 text-primary" />, { date: selectedDateStr })}
                 </div>
               </TabsContent>
 
@@ -363,13 +364,13 @@ export default function Home() {
                 <div className="max-w-3xl mx-auto">
                   {renderTaskList(
                     "weekly", 
-                    `Tasks for week of ${format(startOfSelectedWeek, "MMM do")}`, 
+                    startOfSelectedWeekStr === startOfCurrentWeekStr ? "This Week's Tasks" : `Tasks for week of ${format(startOfSelectedWeek, "MMM do")}`, 
                     weeklyTasksForPicker, 
                     <Calendar className="w-6 h-6 text-primary" />, 
-                    { date: format(startOfSelectedWeek, "yyyy-MM-dd") },
+                    { date: startOfSelectedWeekStr },
                     true,
                     [
-                      { title: "Daily Tasks", tasks: state.dailyTasks.filter(t => t.date && isWithinInterval(parseISO(t.date), { start: startOfSelectedWeek, end: endOfSelectedWeek })), category: 'daily' }
+                      { title: "Today's Tasks", tasks: state.dailyTasks.filter(t => t.date && isWithinInterval(parseISO(t.date), { start: startOfSelectedWeek, end: endOfSelectedWeek })), category: 'daily' }
                     ]
                   )}
                 </div>
@@ -443,8 +444,8 @@ export default function Home() {
                     { sprint: selectedSprintName },
                     true,
                     sprintInView && sprintInView.startDate && sprintInView.endDate ? [
-                      { title: "Daily Tasks", tasks: state.dailyTasks.filter(t => t.date && isWithinInterval(parseISO(t.date), { start: parseISO(sprintInView.startDate!), end: parseISO(sprintInView.endDate!) })), category: 'daily' },
-                      { title: "Weekly Tasks", tasks: state.weeklyTasks.filter(t => t.date && isWithinInterval(parseISO(t.date), { start: parseISO(sprintInView.startDate!), end: parseISO(sprintInView.endDate!) })), category: 'weekly' }
+                      { title: "Today's Tasks", tasks: state.dailyTasks.filter(t => t.date && isWithinInterval(parseISO(t.date), { start: parseISO(sprintInView.startDate!), end: parseISO(sprintInView.endDate!) })), category: 'daily' },
+                      { title: "This Week's Tasks", tasks: state.weeklyTasks.filter(t => t.date && isWithinInterval(parseISO(t.date), { start: parseISO(sprintInView.startDate!), end: parseISO(sprintInView.endDate!) })), category: 'weekly' }
                     ] : []
                   )}
                 </div>

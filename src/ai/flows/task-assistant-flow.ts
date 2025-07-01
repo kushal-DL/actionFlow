@@ -24,12 +24,12 @@ export type TaskAssistantInput = z.infer<typeof TaskAssistantInputSchema>;
 
 const TaskAssistantOutputSchema = z.object({
   intent: z
-    .enum(['answer_question', 'create_tasks', 'greeting', 'clarification'])
+    .enum(['answer_question', 'create_tasks', 'mark_tasks_done', 'delete_tasks', 'greeting', 'clarification'])
     .describe("The user's primary intent."),
   answer: z
     .string()
     .nullable()
-    .describe("The AI-generated answer if the intent is 'answer_question', 'greeting', or 'clarification'. Null if 'create_tasks'."),
+    .describe("The AI-generated answer if the intent is 'answer_question', 'greeting', or 'clarification'. Null otherwise."),
 });
 export type TaskAssistantOutput = z.infer<typeof TaskAssistantOutputSchema>;
 
@@ -45,35 +45,43 @@ export async function taskAssistantRouter(
     throw new Error("LLM_MODEL_NAME environment variable not set.");
   }
   
-  const prompt = `You are "Jarvis," the intelligent and helpful AI assistant for the ActionFlow application. Your purpose is to make task management seamless and efficient. When a user asks who you are, respond in a friendly, conversational way that reflects this purpose. Avoid technical jargon like "intent-detection AI".
+  const prompt = `You are "Jarvis," the intelligent and helpful AI assistant for the ActionFlow application. Your purpose is to make task management seamless and efficient. When a user asks who you are, respond in a friendly, conversational way that reflects this purpose. Avoid technical jargon.
 
 Your primary job is to analyze the user's query and determine their true intent.
 
 **Step 1: Analyze the Query and Determine Intent**
 Classify the user's query into ONE of the following intents:
 
-1.  **'create_tasks'**: The user wants to create one or more tasks. This is for any command or statement that implies a new to-do item.
-    - Examples: "remind me to follow up with accounting tomorrow", "add a task to fix the login bug for the sprint", "send the weekly report".
-    - If the intent is 'create_tasks', your 'answer' field MUST be null.
+1.  **'create_tasks'**: The user wants to create one or more tasks. This is for any command that implies a new to-do item.
+    - Examples: "remind me to follow up with accounting", "add a task to fix the login bug".
+    - If this intent is chosen, the 'answer' field MUST be null.
 
-2.  **'answer_question'**: The user is asking a question about their existing tasks, about you, or for general knowledge.
-    - Look for interrogative words like "what", "who", "when", "show me", "do I have".
+2.  **'mark_tasks_done'**: The user wants to complete, finish, or close one or more existing tasks.
+    - Keywords: "complete", "finish", "done", "close".
+    - Examples: "mark the report as done", "close all my tasks for today", "finish the sprint tasks".
+    - If this intent is chosen, the 'answer' field MUST be null.
+
+3.  **'delete_tasks'**: The user wants to permanently remove or get rid of one or more tasks.
+    - Keywords: "delete", "remove", "get rid of", "trash".
+    - Examples: "delete the deployment task", "remove the item about the Q3 report", "get rid of all my misc tasks".
+    - If this intent is chosen, the 'answer' field MUST be null.
+
+4.  **'answer_question'**: The user is asking a question about their existing tasks, about you, or for general knowledge.
+    - Look for interrogative words: "what", "who", "when", "show me", "do I have".
     - Examples: "what do I have to do today?", "who is working on the report?", "who are you?".
     - For this intent, you must generate a helpful response in the 'answer' field.
 
-3.  **'greeting'**: The user is making simple small talk.
+5.  **'greeting'**: The user is making simple small talk.
     - Examples: "hello", "how are you?", "good morning", "thanks".
     - For this intent, provide a friendly, conversational response in the 'answer' field.
     
-4.  **'clarification'**: The query is too ambiguous to fit into the other categories.
+6.  **'clarification'**: The query is too ambiguous to fit into the other categories.
     - Example: "the report". This is too vague.
     - For this intent, ask a clarifying question in the 'answer' field. Example: "Are you asking about a report or do you want to create a task for one?"
 
 **Step 2: Generate Your Response**
-- If intent is **'create_tasks'**: Set 'intent' to 'create_tasks' and 'answer' to null. This is critical.
-- If intent is **'answer_question'**: Set 'intent' to 'answer_question' and generate a helpful answer using the provided context.
-- If intent is **'greeting'**: Set 'intent' to 'greeting' and provide a short, friendly response.
-- If intent is **'clarification'**: Set 'intent' to 'clarification' and ask a clarifying question.
+- For **'create_tasks'**, **'mark_tasks_done'**, or **'delete_tasks'**: Set the intent and make the 'answer' field null. This is critical.
+- For other intents: Set the intent and generate the appropriate text response in the 'answer' field.
 
 **CONTEXT FOR ANSWERING QUESTIONS:**
 - Today's Date: ${currentDate}

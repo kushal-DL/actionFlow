@@ -26,7 +26,7 @@ const TaskSchema = z.object({
     .describe('A concise action item. Extract the core to-do item from the user\'s request. For example, "remind me to send the TPS report" should become "Send the TPS report".'),
   category: z
     .enum(['daily', 'weekly', 'sprint', 'misc'])
-    .describe("The checklist this task belongs to. 'daily' for tasks due today. 'weekly' for tasks due this week. 'sprint' for development sprint tasks. 'misc' for others."),
+    .describe("The checklist this task belongs to. 'daily' for tasks in the 'Today' view. 'weekly' for tasks in the 'This Week' view. 'sprint' for development sprint tasks. 'misc' for others."),
   owner: z
     .string()
     .describe("The person responsible for the task. This field is mandatory. If no person is named in the query, you MUST use the provided default owner's name."),
@@ -69,8 +69,8 @@ Your only goal is to accurately parse a user's request and convert it into a str
     - CRITICAL: Strip away phrases like "add a task to", "remind me to", "can you create a task for".
 
 2.  **Determine the Category (category)**: You MUST choose one of these four options: 'daily', 'weekly', 'sprint', or 'misc'.
-    - 'daily': For tasks due today or with daily frequency. Keywords: "today", "daily", "by end of day".
-    - 'weekly': For tasks due this week or with weekly frequency. Keywords: "this week", "weekly", "by Friday".
+    - 'daily': For tasks due today (part of the "Today" list) or with daily frequency. Keywords: "today", "daily", "by end of day".
+    - 'weekly': For tasks due this week (part of the "This Week" list) or with weekly frequency. Keywords: "this week", "weekly", "by Friday".
     - 'sprint': For tasks related to the current software development sprint. Keywords: "sprint", "feature", "bug", "ticket".
     - 'misc': A fallback for tasks that don't fit other categories or have no clear deadline.
     - For requests like "send report A daily and report B weekly", create two tasks and assign the correct respective categories.
